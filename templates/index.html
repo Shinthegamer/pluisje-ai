@@ -1,1 +1,98 @@
-<!-- Voeg hier je index.html toe -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Pluisje de AI</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <form action="/logout" method="GET">
+            <button class="logout-button" type="submit">Uitloggen</button>
+        </form>
+
+        <h1>Hoi Anita! 🐹</h1>
+        <p>Pluisje is er weer! Wat wil je vandaag weten?</p>
+
+        <div id="chat-history">
+            {% for msg in messages %}
+                <div class="chat {{ msg.role }}">
+                    {{ msg.content | safe }}
+                </div>
+            {% endfor %}
+        </div>
+
+        <form id="prompt-form" onsubmit="event.preventDefault(); genereerTekst();">
+            <input type="text" id="prompt" placeholder="Typ hier je vraag voor Pluisje..." required>
+            <button type="submit">Stuur</button>
+            <button type="button" onclick="genereerAfbeelding()">🖼️ Maak een plaatje</button>
+        </form>
+
+        <div id="error-message"></div>
+        <div id="resultaat"></div>
+        <img id="afbeelding" style="display: none; margin-top: 1rem;" />
+    </div>
+
+    <script>
+        async function genereerTekst() {
+            const prompt = document.getElementById("prompt").value;
+            const res = await fetch("/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ prompt })
+            });
+
+            const data = await res.json();
+            const errorEl = document.getElementById("error-message");
+            const resultEl = document.getElementById("resultaat");
+            const imageEl = document.getElementById("afbeelding");
+
+            if (data.response) {
+                window.location.reload();  // Laat chatgeschiedenis opnieuw zien
+            } else {
+                errorEl.textContent = data.error || "Er ging iets mis.";
+                resultEl.textContent = "";
+                imageEl.style.display = "none";
+            }
+        }
+
+        async function genereerAfbeelding() {
+            const prompt = document.getElementById("prompt").value;
+            const res = await fetch("/generate-image", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ prompt })
+            });
+
+            const data = await res.json();
+            const errorEl = document.getElementById("error-message");
+            const resultEl = document.getElementById("resultaat");
+            const imageEl = document.getElementById("afbeelding");
+
+            if (data.image_url) {
+                imageEl.src = data.image_url;
+                imageEl.style.display = "block";
+                resultEl.textContent = "";
+                errorEl.textContent = "";
+            } else {
+                errorEl.textContent = data.error || "Er ging iets mis.";
+                resultEl.textContent = "";
+                imageEl.style.display = "none";
+            }
+        }
+
+        window.onload = function () {
+            const chatBox = document.getElementById("chat-history");
+            if (chatBox) {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        };
+    </script>
+
+    <hr>
+    <footer style="text-align: center; margin-top: 2rem;">
+        <img src="{{ url_for('static', filename='bibliotheek_logo.png') }}" alt="Pluisje logo" style="height: 80px; margin-bottom: 1rem;">
+        <p>Deze website draait op een team van enthousiaste hamstertjes. 🐹❤️</p>
+    </footer>
+</body>
+</html>
