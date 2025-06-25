@@ -1,5 +1,6 @@
 from flask import Flask, session, render_template, request, jsonify, redirect, url_for, flash
 from openai import OpenAI
+from flask_sqlalchemy import SQLAlchemy
 import os
 from dotenv import load_dotenv
 from functools import wraps
@@ -10,6 +11,17 @@ app = Flask(__name__)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
 debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')  # Database URL van Render
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+class ChatMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_email = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(20), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
 
 def login_required(f):
     @wraps(f)
@@ -46,9 +58,18 @@ def login():
 @app.route("/")
 @login_required
 def index():
-    chat_history = session.get("messages", [])
+    email = session.get("email")
+    chat_history = []
+
+    if email:
+        # Query alle berichten van deze gebruiker, chronologisch
+        db_msgs = ChatMessage.query.filter_by(user_email=email).order_by(ChatMessage.timestamp).all()
+
+        # Omzetten naar lijst dicts voor template, of direct doorgeven (kan ook in Jinja)
+        chat_history = [{"role": m.role, "content": m.content} for m in db_msgs]
+
     user_mode = session.get("user")
-    debug = app.debug  # of via environment variable
+    debug = app.debug
     return render_template("index.html", messages=chat_history, user=user_mode, debug=debug)
 
 @app.route("/logout")
@@ -68,22 +89,18 @@ def reset():
 def generate():
     data = request.json
     user_input = data.get("prompt", "").strip()
+    email = session.get("email") or "onbekend"
 
     if not user_input:
         return jsonify({"error": "Geen invoer ontvangen"}), 400
 
-    if len(user_input) > 1000:
-        return jsonify({"error": "De invoer is te lang (max. 1000 tekens)."}), 400
-
-    # Voorbeeld van systeemrol aanpassen per gebruiker
     if "messages" not in session:
         if session.get("user") == "bieb":
-            role = "Je bent een AI-assistent voor bibliotheekmedewerkers. Gebruik heldere, vriendelijke en toegankelijke Nederlandse taal."
+            role = "Je bent een AI-assistent voor bibliotheekmedewerkers..."
         else:
-            role = "Je bent Pluisje de hamster-AI. Je bent nieuwsgierig, speels en helpt Anita met slimme en lieve antwoorden. Spreek op een vrolijke toon en gebruik af en toe een hamstergrapje."
+            role = "Je bent Pluisje de hamster-AI..."
         session["messages"] = [{"role": "system", "content": role}]
 
-    # Voeg de vraag van de gebruiker toe
     session["messages"].append({"role": "user", "content": user_input})
 
     try:
@@ -93,6 +110,14 @@ def generate():
         )
         assistant_reply = response.choices[0].message.content
         session["messages"].append({"role": "assistant", "content": assistant_reply})
+
+        # Opslaan in database
+        user_msg = ChatMessage(user_email=email, role="user", content=user_input)
+        assistant_msg = ChatMessage(user_email=email, role="assistant", content=assistant_reply)
+        db.session.add(user_msg)
+        db.session.add(assistant_msg)
+        db.session.commit()
+
         return jsonify({"response": assistant_reply})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -102,19 +127,17 @@ def generate():
 def generate_image():
     data = request.json
     user_input = data.get("prompt", "").strip()
+    email = session.get("email") or "onbekend"
 
     if not user_input:
         return jsonify({"error": "Geen prompt ontvangen"}), 400
 
-    # Zorg dat er een systeemrol is
     if "messages" not in session:
-        session["messages"] = [{"role": "system", "content": "Je bent Pluisje de hamster-AI. Je helpt Anita met slimme en lieve antwoorden, soms met een afbeelding."}]
+        session["messages"] = [{"role": "system", "content": "Je bent Pluisje de hamster-AI..."}]
 
-    # Voeg de laatste beeldprompt als user input toe (voor transparantie)
     session["messages"].append({"role": "user", "content": user_input})
 
     try:
-        # Vraag GPT om een visuele prompt op basis van de context
         prompt_samenvatting = client.chat.completions.create(
             model="gpt-4o",
             messages=session["messages"] + [
@@ -122,7 +145,6 @@ def generate_image():
             ]
         ).choices[0].message.content
 
-        # Genereer afbeelding met DALL-E
         response = client.images.generate(
             model="dall-e-3",
             prompt=prompt_samenvatting,
@@ -131,16 +153,25 @@ def generate_image():
         )
         image_url = response.data[0].url
 
-        # Voeg antwoord toe aan chatgeschiedenis
         session["messages"].append({
             "role": "assistant",
             "content": f"Hier is je afbeelding:<br><img src='{image_url}' alt='Pluisje afbeelding' style='max-width:100%; border-radius: 12px; margin-top: 1rem;'>"
         })
 
+        # Opslaan in database
+        user_msg = ChatMessage(user_email=email, role="user", content=user_input)
+        assistant_msg = ChatMessage(user_email=email, role="assistant", content=session["messages"][-1]["content"])
+        db.session.add(user_msg)
+        db.session.add(assistant_msg)
+        db.session.commit()
+
         return jsonify({"image_url": image_url})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
