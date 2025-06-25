@@ -2,3 +2,5 @@ flask
 openai
 python-dotenv
 gunicorn
+flask_sqlalchemy
+psycopg2-binary
