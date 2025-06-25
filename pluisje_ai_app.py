@@ -9,6 +9,7 @@ load_dotenv()
 app = Flask(__name__)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
+debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
 
 def login_required(f):
     @wraps(f)
@@ -140,4 +141,5 @@ def generate_image():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=debug_mode)
