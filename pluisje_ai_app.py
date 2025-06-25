@@ -8,7 +8,7 @@ load_dotenv()
 
 app = Flask(__name__)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-app.secret_key = os.getenv("FLASK_SECRET_KEY") or "pluisje-supergeheim"
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
 def login_required(f):
     @wraps(f)
