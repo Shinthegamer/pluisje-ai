@@ -17,6 +17,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 class ChatMessage(db.Model):
+    __tablename__ = 'chatmessages'  # sluit aan bij bestaande tabel
     id = db.Column(db.Integer, primary_key=True)
     user_email = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False)
