@@ -48,7 +48,8 @@ def login():
 def index():
     chat_history = session.get("messages", [])
     user_mode = session.get("user")
-    return render_template("index.html", messages=chat_history, user=user_mode, debug=app.debug)
+    debug = app.debug  # of via environment variable
+    return render_template("index.html", messages=chat_history, user=user_mode, debug=debug)
 
 @app.route("/logout")
 @login_required

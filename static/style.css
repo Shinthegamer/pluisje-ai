@@ -10,12 +10,16 @@ body {
 
 /* Container voor de chatpagina */
 .container {
-  max-width: 800px;
-  margin: 40px auto;
-  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  height: 80vh;           /* 80% van de viewport hoogte */
+  max-width: 1200px;      /* behoud je max breedte */
+  margin: 0 auto;         /* centreren */
+  padding: 0 1rem;
   background-color: #ffffff;
   border-radius: 20px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
 }
 
 /* Welkomstkop */
@@ -29,16 +33,48 @@ p {
   margin-bottom: 2rem;
 }
 
-/* Chatgeschiedenis */
+/* Chatgeschiedenis neemt zoveel mogelijk ruimte in */
 #chat-history {
-  max-height: 400px;
-  overflow-y: auto;
+  flex-grow: 1;           /* groeit mee in hoogte */
+  overflow-y: auto;       /* scrollt als er teveel content is */
   padding: 10px;
   border: 1px solid #f5d5e0;
   border-radius: 12px;
   margin-bottom: 20px;
   background-color: #fff0f5;
+  min-height: 300px;      /* minimaal 300px hoog */
 }
+
+/* Formulier blijft onderaan, krijgt niet extra ruimte */
+#prompt-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Inputveld groeit mee in breedte */
+#prompt {
+  flex-grow: 1;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+/* Knoppen vast formaat */
+#prompt-form button {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  background-color: #ffb6c1;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#prompt-form button:hover {
+  background-color: #e495aa;
+}
+
 
 /* Chatbubbels */
 .chat {
