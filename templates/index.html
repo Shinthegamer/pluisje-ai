@@ -11,9 +11,16 @@
             <button class="logout-button" type="submit">Uitloggen</button>
         </form>
 
-        <h1>Hoi Anita! 🐹</h1>
-        <p>Pluisje is er weer! Wat wil je vandaag weten?</p>
-
+	<div class="welcome">
+		{% if user %}
+			<h1>Hoi {{ user }}! 🐹</h1>
+			<p>Pluisje is er weer! Wat wil je vandaag weten?</p>
+		{% else %}
+			<h1>Welkom, onbekende bezoeker! 🐹</h1>
+			<p>Log in om Pluisje persoonlijk te laten groeten.</p>
+		{% endif %}
+	</div>
+	
         <div id="chat-history">
             {% for msg in messages %}
                 <div class="chat {{ msg.role }}">

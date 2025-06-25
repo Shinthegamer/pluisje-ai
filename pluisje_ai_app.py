@@ -25,13 +25,14 @@ def login():
     if request.method == "POST":
         email = request.form.get("email", "").strip()
         session["email"] = email
+        session["user"] = email  # <- voeg dit toe
         return redirect(url_for("index"))
     return render_template("login.html")
 
 @app.route("/")
 def index():
     chat_history = session.get("messages", [])
-    user_mode = session.get("user", "anita")
+    user_mode = session.get("user")
     return render_template("index.html", messages=chat_history, user=user_mode)
 
 @app.route("/logout")
