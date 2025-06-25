@@ -13,12 +13,10 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY") or "pluisje-supergeheim"
 @app.before_request
 def check_user():
     email = session.get("email")
-    if not email:
-        session["user"] = "anita"
-    elif email.endswith("@bibliotheekzout.nl"):
-        session["user"] = "bieb"
+    if email:
+        session["user"] = email.split('@')[0]  # toont alleen 'pluis' i.p.v. hele emailadres
     else:
-        session["user"] = "anita"
+        session["user"] = None
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
