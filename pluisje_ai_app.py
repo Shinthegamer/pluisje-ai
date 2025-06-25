@@ -1,4 +1,4 @@
-from flask import Flask, session, render_template, request, jsonify, redirect, url_for
+from flask import Flask, session, render_template, request, jsonify, redirect, url_for, flash
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
@@ -16,7 +16,12 @@ def login_required(f):
         if request.path.startswith("/static/"):
             return f(*args, **kwargs)
         if not session.get("email"):
-            return jsonify({"error": "Niet ingelogd"}), 401
+            # Redirect naar login ipv JSON voor normale routes
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"error": "Niet ingelogd"}), 401
+            else:
+                flash("Log eerst in om deze pagina te bezoeken.", "warning")
+                return redirect(url_for("login"))
         return f(*args, **kwargs)
     return wrapper
 
@@ -38,19 +43,20 @@ def login():
     return render_template("login.html")
 
 @app.route("/")
+@login_required
 def index():
-    if not session.get("email"):
-        return redirect(url_for("login"))
     chat_history = session.get("messages", [])
-    user_mode    = session.get("user")
+    user_mode = session.get("user")
     return render_template("index.html", messages=chat_history, user=user_mode)
 
 @app.route("/logout")
+@login_required
 def logout():
     session.clear()
     return redirect(url_for("login"))
 
 @app.route("/reset")
+@login_required
 def reset():
     session.pop("messages", None)
     return redirect(url_for("index"))
