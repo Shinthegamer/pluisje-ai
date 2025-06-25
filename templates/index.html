@@ -15,9 +15,11 @@
 		{% if user %}
 			<h1>Hoi {{ user }}! 🐹</h1>
 			<p>Pluisje is er weer! Wat wil je vandaag weten?</p>
+		{% elif debug %}
+			<h1>Welkom, onbekende bezoeker! 🐹 (DEBUG modus actief)</h1>
+			<p>Je ziet deze tekst omdat je in debug-modus draait.</p>
 		{% else %}
-			<h1>Welkom, onbekende bezoeker! 🐹</h1>
-			<p>Log in om Pluisje persoonlijk te laten groeten.</p>
+			<!-- Normaal: niks tonen of redirect? -->
 		{% endif %}
 	</div>
 	
