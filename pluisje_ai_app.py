@@ -2,12 +2,23 @@ from flask import Flask, session, render_template, request, jsonify, redirect, u
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
+from functools import wraps
 
 load_dotenv()
 
 app = Flask(__name__)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 app.secret_key = os.getenv("FLASK_SECRET_KEY") or "pluisje-supergeheim"
+
+def login_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if request.path.startswith("/static/"):
+            return f(*args, **kwargs)
+        if not session.get("email"):
+            return jsonify({"error": "Niet ingelogd"}), 401
+        return f(*args, **kwargs)
+    return wrapper
 
 # Welkomstmodus bepalen
 @app.before_request
@@ -23,14 +34,15 @@ def login():
     if request.method == "POST":
         email = request.form.get("email", "").strip()
         session["email"] = email
-        session["user"] = email  # <- voeg dit toe
         return redirect(url_for("index"))
     return render_template("login.html")
 
 @app.route("/")
 def index():
+    if not session.get("email"):
+        return redirect(url_for("login"))
     chat_history = session.get("messages", [])
-    user_mode = session.get("user")
+    user_mode    = session.get("user")
     return render_template("index.html", messages=chat_history, user=user_mode)
 
 @app.route("/logout")
@@ -44,6 +56,7 @@ def reset():
     return redirect(url_for("index"))
 
 @app.route("/generate", methods=["POST"])
+@login_required
 def generate():
     data = request.json
     user_input = data.get("prompt", "").strip()
@@ -77,6 +90,7 @@ def generate():
         return jsonify({"error": str(e)}), 500
 
 @app.route("/generate-image", methods=["POST"])
+@login_required
 def generate_image():
     data = request.json
     user_input = data.get("prompt", "").strip()
