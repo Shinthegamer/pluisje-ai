@@ -192,6 +192,10 @@ form button:hover,
     padding: 0.5rem;
     max-width: 100%;
   }
+    .login-container {
+    max-width: 90vw; /* 90% van de viewport breedte */
+    padding: 1.5rem; /* iets minder padding om ruimte te maken */
+  }
   #chat-history {
     min-height: 200px;
     padding: 5px;
