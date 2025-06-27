@@ -72,6 +72,29 @@ def index():
     user_mode = session.get("user")
     debug = app.debug
     return render_template("index.html", messages=chat_history, user=user_mode, debug=debug)
+    
+@app.route("/test-email")
+@login_required
+def test_email():
+    smtp_server = os.getenv("SMTP_SERVER")
+    smtp_port = int(os.getenv("SMTP_PORT", 587))
+    smtp_username = os.getenv("SMTP_USERNAME")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+
+    msg = EmailMessage()
+    msg["Subject"] = "Testmail van Pluisje.ai"
+    msg["From"] = smtp_username
+    msg["To"] = smtp_username  # Voor test stuur je naar jezelf
+    msg.set_content("Deze mail bevestigt dat SMTP correct werkt!")
+
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            server.send_message(msg)
+        return "Testmail succesvol verzonden!"
+    except Exception as e:
+        return f"Fout bij verzenden: {e}"
 
 @app.route("/logout")
 @login_required
