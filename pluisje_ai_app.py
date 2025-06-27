@@ -4,6 +4,8 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 from dotenv import load_dotenv
 from functools import wraps
+import smtplib
+from email.message import EmailMessage
 
 load_dotenv()
 
