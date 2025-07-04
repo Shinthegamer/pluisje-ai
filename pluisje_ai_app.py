@@ -80,7 +80,7 @@ def login():
             return redirect(url_for("login"))
 
         if not check_password_hash(user.password_hash, password):
-            flash("Wachtwoord klopt niet.", "danger")
+            flash("Wachtwoord klopt niet.", "error")
             return redirect(url_for("login"))
 
         session["email"] = user.email
