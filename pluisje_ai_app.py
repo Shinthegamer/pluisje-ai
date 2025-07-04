@@ -97,6 +97,24 @@ def test_email():
         return "Testmail succesvol verzonden!"
     except Exception as e:
         return f"Fout bij verzenden: {e}"
+        
+@app.route("/test-db")
+@login_required
+def test_db():
+    try:
+        result = db.session.execute("SELECT 1").scalar()
+        aantal_berichten = ChatMessage.query.count()
+
+        # Tel unieke gebruikers via user_email
+        unieke_gebruikers = db.session.query(ChatMessage.user_email).distinct().count()
+
+        return (
+            f"✅ DB OK! Testresultaat: {result}<br>"
+            f"📨 Aantal berichten: {aantal_berichten}<br>"
+            f"👤 Aantal unieke gebruikers: {unieke_gebruikers}"
+        )
+    except Exception as e:
+        return f"❌ DB-fout: {str(e)}"     
 
 @app.route("/logout")
 @login_required
