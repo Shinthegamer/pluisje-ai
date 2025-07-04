@@ -5,12 +5,31 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welkom bij Pluisje</title>
     <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .flash-message {
+            background-color: #ffefc1;
+            border-left: 5px solid #f7b500;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body class="login-body">
     <div class="login-container">
         <img src="/static/bibliotheek_logo.png" alt="Logo" class="login-logo">
         <h1>Welkom bij Pluisje AI 🐹</h1>
         <p class="intro-text">Je slimme hamsterassistent staat klaar om te helpen!</p>
+
+        <!-- FLASHBERICHTEN -->
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="flash-message">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
 
         <form method="POST">
 			<input type="email" name="email" placeholder="E-mailadres" required autocomplete="email">

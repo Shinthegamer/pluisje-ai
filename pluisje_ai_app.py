@@ -294,20 +294,21 @@ def register():
     return render_template("register.html")
 
 @app.route("/verify")
-def verify_email():
-    email = request.args.get("email", "").strip().lower()
+def verify():
+    email = request.args.get("email")
     token = request.args.get("token")
+    user = User.query.filter_by(email=email, verification_token=token).first()
 
-    user = User.query.filter_by(email=email).first()
-    if user and user.verification_token == token:
-        user.is_verified = True
-        user.verification_token = None
-        db.session.commit()
-        flash("Je e-mailadres is bevestigd. Je kunt nu inloggen!", "success")
+    if not user:
+        return "Ongeldige of verlopen verificatielink.", 400
+
+    if user.is_verified:
+        flash("Je account is al geverifieerd. Je kunt inloggen.")
         return redirect(url_for("login"))
-    else:
-        flash("Ongeldige of verlopen verificatielink.", "danger")
-        return redirect(url_for("login"))
+
+    user.is_verified = True
+    db.session.commit()
+    return render_template("welcome.html", email=email)
 
 if __name__ == "__main__":
     with app.app_context():
