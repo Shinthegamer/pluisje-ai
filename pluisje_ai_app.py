@@ -1,6 +1,7 @@
 from flask import Flask, session, render_template, request, jsonify, redirect, url_for, flash
 from openai import OpenAI
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 import os
 from dotenv import load_dotenv
 from functools import wraps
