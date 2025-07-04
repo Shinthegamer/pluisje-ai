@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from functools import wraps
 import smtplib
 from email.message import EmailMessage
+from werkzeug.security import generate_password_hash, check_password_hash
+import uuid
 
 load_dotenv()
 
@@ -26,6 +28,15 @@ class ChatMessage(db.Model):
     role = db.Column(db.String(20), nullable=False)
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, server_default=db.func.now())
+
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    is_verified = db.Column(db.Boolean, default=False)
+    verification_token = db.Column(db.String(64), nullable=True)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
 def login_required(f):
     @wraps(f)
@@ -54,9 +65,25 @@ def check_user():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form.get("email", "").strip()
-        session["email"] = email
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password")
+
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            flash("Geen account gevonden met dit e-mailadres.", "danger")
+            return redirect(url_for("login"))
+
+        if not user.is_verified:
+            flash("Bevestig eerst je e-mailadres via de mail.", "warning")
+            return redirect(url_for("login"))
+
+        if not check_password_hash(user.password_hash, password):
+            flash("Wachtwoord klopt niet.", "danger")
+            return redirect(url_for("login"))
+
+        session["email"] = user.email
         return redirect(url_for("index"))
+
     return render_template("login.html")
 
 @app.route("/")
@@ -211,7 +238,74 @@ def generate_image():
         return jsonify({"image_url": image_url})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+        
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        email = request.form.get("email").strip().lower()
+        password = request.form.get("password")
 
+        if not email or not password:
+            flash("Vul zowel e-mailadres als wachtwoord in.", "danger")
+            return redirect(url_for("register"))
+
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash("Dit e-mailadres is al geregistreerd.", "warning")
+            return redirect(url_for("register"))
+
+        password_hash = generate_password_hash(password)
+        token = str(uuid.uuid4())
+
+        new_user = User(
+            email=email,
+            password_hash=password_hash,
+            is_verified=False,
+            verification_token=token
+        )
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        # Verstuur verificatiemail
+        verify_link = url_for("verify_email", email=email, token=token, _external=True)
+
+        msg = EmailMessage()
+        msg["Subject"] = "Bevestig je registratie bij Pluisje.ai"
+        msg["From"] = os.getenv("SMTP_USERNAME")
+        msg["To"] = email
+        msg.set_content(
+            f"Welkom bij Pluisje.ai!\n\nKlik op de onderstaande link om je e-mailadres te bevestigen:\n{verify_link}"
+        )
+
+        try:
+            with smtplib.SMTP(os.getenv("SMTP_SERVER"), int(os.getenv("SMTP_PORT", 587))) as server:
+                server.starttls()
+                server.login(os.getenv("SMTP_USERNAME"), os.getenv("SMTP_PASSWORD"))
+                server.send_message(msg)
+            flash("Verificatielink verzonden naar je e-mail.", "success")
+        except Exception as e:
+            flash(f"Fout bij verzenden verificatiemail: {e}", "danger")
+
+        return redirect(url_for("login"))
+
+    return render_template("register.html")
+
+@app.route("/verify")
+def verify_email():
+    email = request.args.get("email", "").strip().lower()
+    token = request.args.get("token")
+
+    user = User.query.filter_by(email=email).first()
+    if user and user.verification_token == token:
+        user.is_verified = True
+        user.verification_token = None
+        db.session.commit()
+        flash("Je e-mailadres is bevestigd. Je kunt nu inloggen!", "success")
+        return redirect(url_for("login"))
+    else:
+        flash("Ongeldige of verlopen verificatielink.", "danger")
+        return redirect(url_for("login"))
 
 if __name__ == "__main__":
     with app.app_context():

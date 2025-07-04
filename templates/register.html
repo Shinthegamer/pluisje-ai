@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registreer bij Pluisje</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="login-body">
+    <div class="login-container">
+        <img src="/static/bibliotheek_logo.png" alt="Logo" class="login-logo">
+        <h1>Account aanmaken 🐹</h1>
+        <p class="intro-text">Vul je gegevens in om Pluisje te gebruiken.</p>
+
+        <form method="POST">
+            <input type="email" name="email" id="email" placeholder="E-mailadres" required autocomplete="email">
+            <input type="password" name="password" id="password" placeholder="Wachtwoord" required autocomplete="new-password">
+            <button type="submit">Registreer</button>
+        </form>
+
+        <p class="extra-links">
+            Al een account? <a href="{{ url_for('login') }}">Log hier in</a>
+        </p>
+    </div>
+</body>
+</html>

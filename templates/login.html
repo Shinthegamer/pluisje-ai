@@ -11,10 +11,16 @@
         <img src="/static/bibliotheek_logo.png" alt="Logo" class="login-logo">
         <h1>Welkom bij Pluisje AI 🐹</h1>
         <p class="intro-text">Je slimme hamsterassistent staat klaar om te helpen!</p>
+
         <form method="POST">
-            <input type="email" name="email" placeholder="Voer je e-mailadres in" required>
-            <button type="submit">Start chatten</button>
+			<input type="email" name="email" placeholder="E-mailadres" required autocomplete="email">
+			<input type="password" name="password" placeholder="Wachtwoord" required autocomplete="current-password">
+            <button type="submit">Inloggen</button>
         </form>
+
+        <p class="extra-links">
+            Nog geen account? <a href="{{ url_for('register') }}">Registreer hier</a>
+        </p>
     </div>
 </body>
 </html>
