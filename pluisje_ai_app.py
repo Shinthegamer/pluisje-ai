@@ -102,10 +102,8 @@ def test_email():
 @login_required
 def test_db():
     try:
-        result = db.session.execute("SELECT 1").scalar()
+        result = db.session.execute(text("SELECT 1")).scalar()
         aantal_berichten = ChatMessage.query.count()
-
-        # Tel unieke gebruikers via user_email
         unieke_gebruikers = db.session.query(ChatMessage.user_email).distinct().count()
 
         return (
@@ -114,7 +112,7 @@ def test_db():
             f"👤 Aantal unieke gebruikers: {unieke_gebruikers}"
         )
     except Exception as e:
-        return f"❌ DB-fout: {str(e)}"     
+        return f"❌ DB-fout: {str(e)}"    
 
 @app.route("/logout")
 @login_required
