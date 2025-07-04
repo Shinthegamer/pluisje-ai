@@ -9,6 +9,7 @@ import smtplib
 from email.message import EmailMessage
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
+from flask_migrate import Migrate
 
 load_dotenv()
 
@@ -20,6 +21,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')  # Database UR
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 class ChatMessage(db.Model):
     __tablename__ = 'chatmessages'  # sluit aan bij bestaande tabel

@@ -4,3 +4,4 @@ flask
 openai
 python-dotenv
 gunicorn
+Flask-Migrate>=4.0.4
