@@ -300,7 +300,8 @@ def verify():
     user = User.query.filter_by(email=email, verification_token=token).first()
 
     if not user:
-        return "Ongeldige of verlopen verificatielink.", 400
+        flash("Ongeldige of verlopen verificatielink.", "danger")
+        return redirect(url_for("login"))
 
     if user.is_verified:
         flash("Je account is al geverifieerd. Je kunt inloggen.")
