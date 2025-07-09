@@ -298,32 +298,31 @@ def forgot_password():
         reset_link = url_for("reset_password", token=token, _external=True)
 
         msg = EmailMessage()
-        msg["Subject"] = "Herstel je wachtwoord bij Pluisje.ai"
+        msg["Subject"] = "Nieuw wachtwoord instellen voor Pluisje.ai"
         msg["From"] = os.getenv("SMTP_USERNAME")
         msg["To"] = email
-        msg.set_content("Je e-mailclient ondersteunt geen HTML.")
+        msg.set_content("Je e-mailclient ondersteunt geen HTML. Bezoek Pluisje.ai om je wachtwoord te wijzigen.")
 
-        msg.add_alternative(f"""\
-        <html lang="nl">
+        msg.add_alternative(f"""
+            <!DOCTYPE html>
+            <html lang="nl">
             <head>
-                    <meta charset="UTF-8">
-                    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-                    <meta http-equiv="Content-Language" content="nl">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta charset="UTF-8">
+                <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+                <meta http-equiv="Content-Language" content="nl">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
             </head>
-          <body style="font-family: sans-serif; background-color: #fffafc; padding: 2rem;">
-            <div style="max-width: 500px; margin: auto; background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
-              <h1 style="color: #a0528c;">Wachtwoord herstellen 🐹</h1>
-              <p>Hoi {email},</p>
-              <p>Je hebt onlangs een verzoek gedaan om je wachtwoord opnieuw in te stellen.</p>
-              <p>Klik op onderstaande knop om je wachtwoord opnieuw in te stellen:</p>
-              <a href="{reset_link}" style="display: inline-block; padding: 1rem 2rem; background-color: #ffb6c1; color: white; border-radius: 1rem; text-decoration: none; font-weight: bold;">Stel nieuw wachtwoord in</a>
-              <p style="margin-top: 2rem; font-size: 0.9rem; color: #999;">Heb je dit niet aangevraagd? Negeer deze mail dan gewoon.</p>
-              <p style="color:#888; font-size:0.85rem;">
-                 Deze e-mail is automatisch gegenereerd. Antwoorden is niet mogelijk.
-              </p>
-            </div>
-          </body>
+            <body style="font-family: sans-serif; background-color: #fffafc; padding: 2rem;">
+                <div style="max-width: 500px; margin: auto; background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
+                    <h1 style="color: #a0528c;">Wachtwoord opnieuw instellen 🐹</h1>
+                    <p>Hallo {email},</p>
+                    <p>Je hebt aangegeven dat je je wachtwoord wilt aanpassen. Geen zorgen, dat is zo geregeld.</p>
+                    <p>Klik op de knop hieronder om een nieuw wachtwoord in te stellen:</p>
+                    <a href="{reset_link}" style="display: inline-block; padding: 1rem 2rem; background-color: #ffb6c1; color: white; border-radius: 1rem; text-decoration: none; font-weight: bold;">Nieuw wachtwoord instellen</a>
+                    <p style="margin-top: 2rem; font-size: 0.9rem; color: #999;">Heb je dit verzoek niet gedaan? Dan kun je deze e-mail gewoon negeren.</p>
+                    <p style="margin-top: 1rem; font-size: 0.85rem; color: #888;">Deze e-mail is automatisch verzonden. Je kunt niet reageren op dit bericht.</p>
+                </div>
+            </body>
         </html>
         """, subtype="html")
 
