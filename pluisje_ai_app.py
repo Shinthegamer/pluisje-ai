@@ -14,18 +14,19 @@ from markupsafe import Markup
 
 load_dotenv()
 
-# Helper om tokens veilig te genereren
-serializer = URLSafeTimedSerializer(app.secret_key)
-
 app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY")  # Eerst instellen
+serializer = URLSafeTimedSerializer(app.secret_key)  # Dan gebruiken
+
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-app.secret_key = os.getenv("FLASK_SECRET_KEY")
 debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')  # Database URL van Render
+
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
 
 class ChatMessage(db.Model):
     __tablename__ = 'chatmessages'  # sluit aan bij bestaande tabel
