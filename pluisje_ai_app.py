@@ -261,7 +261,6 @@ def register():
                     <h1 style="color: #a0528c;">Welkom bij Pluisje.ai 🐹</h1>
                     <p>Hoi {email},</p>
                     <p>Klik op onderstaande knop om je e-mailadres te bevestigen:</p>
-                    <p>Heb je zelf deze aanvraag niet gedaan, dan mag je dit bericht negeren</p>
                     <a href="{verify_link}" style="display: inline-block; padding: 1rem 2rem; background-color: #ffb6c1; color: white; border-radius: 1rem; text-decoration: none; font-weight: bold;">Bevestig mijn account</a>
                     <p style="margin-top: 2rem; font-size: 0.9rem; color: #999;">Geen idee waar dit over gaat? Negeer deze mail dan gewoon.</p>
                 </div>
@@ -315,7 +314,6 @@ def forgot_password():
               <p>Hoi {email},</p>
               <p>Je hebt onlangs een verzoek gedaan om je wachtwoord opnieuw in te stellen.</p>
               <p>Klik op onderstaande knop om je wachtwoord opnieuw in te stellen:</p>
-              <p>Heb je zelf deze aanvraag niet gedaan, dan mag je dit bericht negeren</p>
               <a href="{reset_link}" style="display: inline-block; padding: 1rem 2rem; background-color: #ffb6c1; color: white; border-radius: 1rem; text-decoration: none; font-weight: bold;">Stel nieuw wachtwoord in</a>
               <p style="margin-top: 2rem; font-size: 0.9rem; color: #999;">Heb je dit niet aangevraagd? Negeer deze mail dan gewoon.</p>
             </div>
