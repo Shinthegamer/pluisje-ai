@@ -5,6 +5,16 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registreer bij Pluisje</title>
     <link rel="stylesheet" href="/static/style.css">
+	<link rel="manifest" href="/static/manifest.json">
+	<link rel="icon" href="/static/icons/pluisje-192.png">
+	<meta name="theme-color" content="#ffc0cb">
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/static/sw.js')
+      .then(() => console.log('Service Worker geregistreerd.'));
+  }
+</script>
 </head>
 <body class="login-body">
     <div class="login-container">
