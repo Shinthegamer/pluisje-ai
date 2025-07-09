@@ -263,6 +263,9 @@ def register():
                     <p>Klik op onderstaande knop om je e-mailadres te bevestigen:</p>
                     <a href="{verify_link}" style="display: inline-block; padding: 1rem 2rem; background-color: #ffb6c1; color: white; border-radius: 1rem; text-decoration: none; font-weight: bold;">Bevestig mijn account</a>
                     <p style="margin-top: 2rem; font-size: 0.9rem; color: #999;">Geen idee waar dit over gaat? Negeer deze mail dan gewoon.</p>
+                    <p style="color:#888; font-size:0.85rem;">
+                        Deze e-mail is automatisch gegenereerd. Antwoorden is niet mogelijk.
+                    </p>
                 </div>
             </body>
         </html>
@@ -316,6 +319,9 @@ def forgot_password():
               <p>Klik op onderstaande knop om je wachtwoord opnieuw in te stellen:</p>
               <a href="{reset_link}" style="display: inline-block; padding: 1rem 2rem; background-color: #ffb6c1; color: white; border-radius: 1rem; text-decoration: none; font-weight: bold;">Stel nieuw wachtwoord in</a>
               <p style="margin-top: 2rem; font-size: 0.9rem; color: #999;">Heb je dit niet aangevraagd? Negeer deze mail dan gewoon.</p>
+              <p style="color:#888; font-size:0.85rem;">
+                 Deze e-mail is automatisch gegenereerd. Antwoorden is niet mogelijk.
+              </p>
             </div>
           </body>
         </html>
