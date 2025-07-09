@@ -295,7 +295,7 @@ def forgot_password():
         reset_link = url_for("reset_password", token=token, _external=True)
 
         msg = EmailMessage()
-        msg["Subject"] = "Reset je wachtwoord bij Pluisje.ai"
+        msg["Subject"] = "Herstel je wachtwoord bij Pluisje.ai"
         msg["From"] = os.getenv("SMTP_USERNAME")
         msg["To"] = email
         msg.set_content("Je e-mailclient ondersteunt geen HTML.")
