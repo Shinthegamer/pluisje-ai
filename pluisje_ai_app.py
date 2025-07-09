@@ -1,7 +1,6 @@
-from flask import Flask, session, render_template, request, jsonify, redirect, url_for, flash
+from flask import Flask, session, render_template, request, jsonify, redirect, url_for, flash, Markup
 from openai import OpenAI
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import text
 import os
 from dotenv import load_dotenv
 from functools import wraps
@@ -10,8 +9,12 @@ from email.message import EmailMessage
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
 from flask_migrate import Migrate
+from itsdangerous import URLSafeTimedSerializer
 
 load_dotenv()
+
+# Helper om tokens veilig te genereren
+serializer = URLSafeTimedSerializer(app.secret_key)
 
 app = Flask(__name__)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -80,7 +83,7 @@ def login():
             return redirect(url_for("login"))
 
         if not check_password_hash(user.password_hash, password):
-            flash("Wachtwoord klopt niet.", "error")
+            flash("Wachtwoord klopt niet.", "danger")
             return redirect(url_for("login"))
 
         session["email"] = user.email
@@ -104,46 +107,8 @@ def index():
     user_mode = session.get("user")
     debug = app.debug
     return render_template("index.html", messages=chat_history, user=user_mode, debug=debug)
-    
-@app.route("/test-email")
-@login_required
-def test_email():
-    smtp_server = os.getenv("SMTP_SERVER")
-    smtp_port = int(os.getenv("SMTP_PORT", 587))
-    smtp_username = os.getenv("SMTP_USERNAME")
-    smtp_password = os.getenv("SMTP_PASSWORD")
-
-    msg = EmailMessage()
-    msg["Subject"] = "Testmail van Pluisje.ai"
-    msg["From"] = smtp_username
-    msg["To"] = smtp_username  # Voor test stuur je naar jezelf
-    msg.set_content("Deze mail bevestigt dat SMTP correct werkt!")
-
-    try:
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls()
-            server.login(smtp_username, smtp_password)
-            server.send_message(msg)
-        return "Testmail succesvol verzonden!"
-    except Exception as e:
-        return f"Fout bij verzenden: {e}"
-        
-@app.route("/test-db")
-@login_required
-def test_db():
-    try:
-        result = db.session.execute(text("SELECT 1")).scalar()
-        aantal_berichten = ChatMessage.query.count()
-        unieke_gebruikers = db.session.query(ChatMessage.user_email).distinct().count()
-
-        return (
-            f"✅ DB OK! Testresultaat: {result}<br>"
-            f"📨 Aantal berichten: {aantal_berichten}<br>"
-            f"👤 Aantal unieke gebruikers: {unieke_gebruikers}"
-        )
-    except Exception as e:
-        return f"❌ DB-fout: {str(e)}"    
-
+   
+     
 @app.route("/logout")
 @login_required
 def logout():
@@ -276,9 +241,21 @@ def register():
         msg["Subject"] = "Bevestig je registratie bij Pluisje.ai"
         msg["From"] = os.getenv("SMTP_USERNAME")
         msg["To"] = email
-        msg.set_content(
-            f"Welkom bij Pluisje.ai!\n\nKlik op de onderstaande link om je e-mailadres te bevestigen:\n{verify_link}"
-        )
+        msg.set_content("Je e-mailclient ondersteunt geen HTML.")
+
+        msg.add_alternative(f"""\
+        <html>
+          <body style="font-family: sans-serif; background-color: #fffafc; padding: 2rem;">
+            <div style="max-width: 500px; margin: auto; background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
+              <h1 style="color: #a0528c;">Welkom bij Pluisje.ai 🐹</h1>
+              <p>Hoi {email},</p>
+              <p>Klik op onderstaande knop om je e-mailadres te bevestigen:</p>
+              <a href="{verify_link}" style="display: inline-block; padding: 1rem 2rem; background-color: #ffb6c1; color: white; border-radius: 1rem; text-decoration: none; font-weight: bold;">Bevestig mijn account</a>
+              <p style="margin-top: 2rem; font-size: 0.9rem; color: #999;">Geen idee waar dit over gaat? Negeer deze mail dan gewoon.</p>
+            </div>
+          </body>
+        </html>
+        """, subtype="html")
 
         try:
             with smtplib.SMTP(os.getenv("SMTP_SERVER"), int(os.getenv("SMTP_PORT", 587))) as server:
@@ -292,6 +269,80 @@ def register():
         return redirect(url_for("login"))
 
     return render_template("register.html")
+
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        user = User.query.filter_by(email=email).first()
+
+        if not user:
+            flash("Geen account gevonden met dit e-mailadres.", "warning")
+            return redirect(url_for("forgot_password"))
+
+        token = serializer.dumps(email, salt="reset")
+        reset_link = url_for("reset_password", token=token, _external=True)
+
+        msg = EmailMessage()
+        msg["Subject"] = "Reset je wachtwoord bij Pluisje.ai"
+        msg["From"] = os.getenv("SMTP_USERNAME")
+        msg["To"] = email
+        msg.set_content("Je e-mailclient ondersteunt geen HTML.")
+
+        msg.add_alternative(f"""\
+        <html>
+          <body style="font-family: sans-serif; background-color: #fffafc; padding: 2rem;">
+            <div style="max-width: 500px; margin: auto; background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
+              <h1 style="color: #a0528c;">Wachtwoord herstellen 🐹</h1>
+              <p>Hoi {email},</p>
+              <p>Klik op onderstaande knop om je wachtwoord opnieuw in te stellen:</p>
+              <a href="{reset_link}" style="display: inline-block; padding: 1rem 2rem; background-color: #ffb6c1; color: white; border-radius: 1rem; text-decoration: none; font-weight: bold;">Stel nieuw wachtwoord in</a>
+              <p style="margin-top: 2rem; font-size: 0.9rem; color: #999;">Heb je dit niet aangevraagd? Negeer deze mail dan gewoon.</p>
+            </div>
+          </body>
+        </html>
+        """, subtype="html")
+
+        try:
+            with smtplib.SMTP(os.getenv("SMTP_SERVER"), int(os.getenv("SMTP_PORT", 587))) as server:
+                server.starttls()
+                server.login(os.getenv("SMTP_USERNAME"), os.getenv("SMTP_PASSWORD"))
+                server.send_message(msg)
+            flash("Een herstelmail is verzonden naar je inbox.", "success")
+        except Exception as e:
+            flash(f"Fout bij verzenden van de resetmail: {e}", "danger")
+
+        return redirect(url_for("login"))
+
+    return render_template("forgot_password.html")
+
+
+@app.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    try:
+        email = serializer.loads(token, salt="reset", max_age=3600)  # 1 uur geldig
+    except Exception:
+        flash("Ongeldige of verlopen resetlink.", "danger")
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        new_pw = request.form.get("password")
+        if not new_pw:
+            flash("Voer een nieuw wachtwoord in.", "warning")
+            return redirect(request.url)
+
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            flash("Gebruiker niet gevonden.", "danger")
+            return redirect(url_for("login"))
+
+        user.password_hash = generate_password_hash(new_pw)
+        db.session.commit()
+        flash("Je wachtwoord is bijgewerkt. Je kunt nu inloggen.", "success")
+        return redirect(url_for("login"))
+
+    return render_template("reset_password.html", token=token)
+
 
 @app.route("/verify")
 def verify():
@@ -312,7 +363,6 @@ def verify():
     return render_template("welcome.html", email=email)
 
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
+    # Alleen voor lokaal testen, handmatig draaien
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
