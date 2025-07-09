@@ -250,15 +250,21 @@ def register():
 
         msg.add_alternative(f"""\
         <html lang="nl">
-          <body style="font-family: sans-serif; background-color: #fffafc; padding: 2rem;">
-            <div style="max-width: 500px; margin: auto; background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
-              <h1 style="color: #a0528c;">Welkom bij Pluisje.ai 🐹</h1>
-              <p>Hoi {email},</p>
-              <p>Klik op onderstaande knop om je e-mailadres te bevestigen:</p>
-              <a href="{verify_link}" style="display: inline-block; padding: 1rem 2rem; background-color: #ffb6c1; color: white; border-radius: 1rem; text-decoration: none; font-weight: bold;">Bevestig mijn account</a>
-              <p style="margin-top: 2rem; font-size: 0.9rem; color: #999;">Geen idee waar dit over gaat? Negeer deze mail dan gewoon.</p>
-            </div>
-          </body>
+            <head>
+                    <meta charset="UTF-8">
+                    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+                    <meta http-equiv="Content-Language" content="nl">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="font-family: sans-serif; background-color: #fffafc; padding: 2rem;">
+                <div style="max-width: 500px; margin: auto; background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
+                    <h1 style="color: #a0528c;">Welkom bij Pluisje.ai 🐹</h1>
+                    <p>Hoi {email},</p>
+                    <p>Klik op onderstaande knop om je e-mailadres te bevestigen:</p>
+                    <a href="{verify_link}" style="display: inline-block; padding: 1rem 2rem; background-color: #ffb6c1; color: white; border-radius: 1rem; text-decoration: none; font-weight: bold;">Bevestig mijn account</a>
+                    <p style="margin-top: 2rem; font-size: 0.9rem; color: #999;">Geen idee waar dit over gaat? Negeer deze mail dan gewoon.</p>
+                </div>
+            </body>
         </html>
         """, subtype="html")
 
@@ -296,6 +302,12 @@ def forgot_password():
 
         msg.add_alternative(f"""\
         <html lang="nl">
+            <head>
+                    <meta charset="UTF-8">
+                    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+                    <meta http-equiv="Content-Language" content="nl">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
           <body style="font-family: sans-serif; background-color: #fffafc; padding: 2rem;">
             <div style="max-width: 500px; margin: auto; background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
               <h1 style="color: #a0528c;">Wachtwoord herstellen 🐹</h1>
