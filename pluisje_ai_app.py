@@ -1,4 +1,4 @@
-from flask import Flask, session, render_template, request, jsonify, redirect, url_for, flash, Markup
+from flask import Flask, session, render_template, request, jsonify, redirect, url_for, flash
 from openai import OpenAI
 from flask_sqlalchemy import SQLAlchemy
 import os
@@ -10,6 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
 from flask_migrate import Migrate
 from itsdangerous import URLSafeTimedSerializer
+from markupsafe import Markup
 
 load_dotenv()
 
