@@ -15,6 +15,7 @@
       .then(() => console.log('Service Worker geregistreerd.'));
   }
 </script>
+
 </head>
 <body class="login-body">
     <div class="login-container">
@@ -30,7 +31,15 @@
 			<input type="password" name="password" placeholder="Wachtwoord" required autocomplete="current-password">
             <button type="submit">Inloggen</button>
         </form>
-
+		
+		{% if show_reset_link %}
+			<div class="text-center mt-3">
+				<small class="text-muted">
+					Wachtwoord vergeten? <a href="{{ url_for('forgot_password') }}">Herstel je wachtwoord hier</a>.
+				</small>
+			</div>
+		{% endif %}
+		
         <p class="extra-links">
             Nog geen account? <a href="{{ url_for('register') }}">Registreer hier</a>
         </p>

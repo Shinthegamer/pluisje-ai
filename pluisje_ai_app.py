@@ -71,27 +71,30 @@ def check_user():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    show_reset_link = False
+
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password")
 
         user = User.query.filter_by(email=email).first()
+
         if not user:
             flash("Geen account gevonden met dit e-mailadres.", "danger")
-            return redirect(url_for("login"))
+            return render_template("login.html", show_reset_link=False)
 
         if not user.is_verified:
             flash("Bevestig eerst je e-mailadres via de mail.", "warning")
-            return redirect(url_for("login"))
+            return render_template("login.html", show_reset_link=False)
 
         if not check_password_hash(user.password_hash, password):
             flash("Wachtwoord klopt niet.", "danger")
-            return redirect(url_for("login"))
+            return render_template("login.html", show_reset_link=True)
 
         session["email"] = user.email
         return redirect(url_for("index"))
 
-    return render_template("login.html")
+    return render_template("login.html", show_reset_link=False)
 
 @app.route("/")
 @login_required
