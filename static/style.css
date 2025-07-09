@@ -300,6 +300,36 @@ form button:hover,
 }
 
 @media (max-width: 768px) {
+	
+	.forgot-container,
+	.reset-container {
+    max-width: 90vw;
+    padding: 1.5rem;
+  }
+
+  .forgot-body,
+  .reset-body {
+    padding: 1rem;
+    height: auto;
+  }
+
+  .forgot-container input,
+  .reset-container input,
+  .forgot-container button,
+  .reset-container button {
+    font-size: 1rem;
+  }
+
+  .forgot-container h2,
+  .reset-container h2 {
+    font-size: 1.5rem;
+  }
+
+  .forgot-container p,
+  .reset-container p {
+    font-size: 0.9rem;
+  }
+	
   .container {
     height: auto; /* minder vaste hoogte */
     padding: 0.5rem;
@@ -307,6 +337,7 @@ form button:hover,
 	display: flex;
     flex-direction: column-reverse;
   }
+  
     .login-container {
     max-width: 90vw; /* 90% van de viewport breedte */
     padding: 1.5rem; /* iets minder padding om ruimte te maken */
