@@ -22,6 +22,12 @@ body {
   box-sizing: border-box;
 }
 
+.chat-input-area {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
 /* Wachtwoordherstel opmaak */
 .reset-body,
 .forgot-body {
@@ -113,7 +119,7 @@ p {
 #chat-history {
   flex-grow: 1;           /* groeit mee in hoogte */
   overflow-y: auto;       /* scrollt als er teveel content is */
-  padding: 10px;
+  padding: 1rem;
   border: 1px solid #f5d5e0;
   border-radius: 12px;
   margin-bottom: 20px;
@@ -121,6 +127,7 @@ p {
   min-height: 300px;      /* minimaal 300px hoog */
   display: flex;
   flex-direction: column;
+  max-height: 60vh;
 }
 
 /* Formulier blijft onderaan, krijgt niet extra ruimte */
@@ -302,6 +309,27 @@ form button:hover,
 
 @media (max-width: 768px) {
 	
+  .chat-input-area {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff0f5;
+    padding: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    z-index: 1000;
+    border-top: 1px solid #ffc0cb;
+  }
+
+  .chat-input-area input {
+    flex: 1;
+  }
+
+  body {
+    padding-bottom: 5rem;
+  }
+  
   .forgot-container,
   .reset-container {
     max-width: 90vw !important;
@@ -362,3 +390,23 @@ form button:hover,
     font-size: 1rem;
   }
 }
+
+  #listening-hamster {
+	display: none;
+	animation: wiggle 0.6s infinite;
+	position: fixed;
+	bottom: 100px;
+	right: 20px;
+	width: 64px;
+	height: auto;
+	z-index: 999;
+}
+
+@keyframes wiggle {
+	0% { transform: rotate(0deg); }
+	25% { transform: rotate(1.5deg); }
+	50% { transform: rotate(0deg); }
+	75% { transform: rotate(-1.5deg); }
+	100% { transform: rotate(0deg); }
+}
+  

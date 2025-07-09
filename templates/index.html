@@ -17,42 +17,51 @@
 </script>
 </head>
 <body>
-    <div class="container">
-		{% include 'flashes.html' %}
-        <form action="/logout" method="GET">
-            <button class="logout-button" type="submit">Uitloggen</button>
-        </form>
+<div class="container">
+	<img id="listening-hamster" src="{{ url_for('static', filename='images/pluisje-luistert.png') }}" alt="Pluisje luistert..." style="display: none; height: 60px; margin: 0 auto;" />
+    {% include 'flashes.html' %}
 
-	<div class="welcome">
-		{% if user %}
-			<h1>Hoi {{ user }}! 🐹</h1>
-			<p>Pluisje is er weer! Wat wil je vandaag weten?</p>
-		{% elif debug %}
-			<h1>Welkom, onbekende bezoeker! 🐹 (DEBUG modus actief)</h1>
-			<p>Je ziet deze tekst omdat je in debug-modus draait.</p>
-		{% else %}
-			<!-- Normaal: niks tonen of redirect? -->
-		{% endif %}
-	</div>
-	
-        <div id="chat-history">
-            {% for msg in messages %}
-                <div class="chat {{ msg.role }}">
-                    {{ msg.content | safe }}
-                </div>
-            {% endfor %}
-        </div>
+    <form action="/logout" method="GET">
+        <button class="logout-button" type="submit">Uitloggen</button>
+    </form>
 
-        <form id="prompt-form" onsubmit="event.preventDefault(); genereerTekst();">
-            <input type="text" id="prompt" placeholder="Typ hier je vraag voor Pluisje..." required>
-            <button type="submit">Stuur</button>
-            <button type="button" onclick="genereerAfbeelding()">🖼️ Maak een plaatje</button>
-        </form>
-
-        <div id="error-message"></div>
-        <div id="resultaat"></div>
-        <img id="afbeelding" style="display: none; margin-top: 1rem;" />
+    <div class="welcome">
+        {% if user %}
+            <h1>Hoi {{ user }}! 🐹</h1>
+            <p>Pluisje is er weer! Wat wil je vandaag weten?</p>
+        {% elif debug %}
+            <h1>Welkom, onbekende bezoeker! 🐹 (DEBUG modus actief)</h1>
+            <p>Je ziet deze tekst omdat je in debug-modus draait.</p>
+        {% endif %}
     </div>
+
+    <div id="chat-history">
+        {% for msg in messages %}
+            <div class="chat {{ msg.role }}">
+                {{ msg.content | safe }}
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Mobiele vaste inputbalk -->
+    <form id="prompt-form" onsubmit="event.preventDefault(); genereerTekst();">
+        <div class="chat-input-area">
+            <input type="text" id="prompt" name="prompt" placeholder="Typ of spreek iets..." required>
+            <button type="button" id="mic-button">🎤</button>
+            <button type="submit">Stuur</button>
+            <button type="button" onclick="genereerAfbeelding()">🖼️</button>
+        </div>
+    </form>
+
+    <div id="error-message"></div>
+    <div id="resultaat"></div>
+    <img id="afbeelding" style="display: none; margin-top: 1rem;" />
+
+    <footer style="text-align: center; margin-top: 2rem;">
+        <img src="{{ url_for('static', filename='bibliotheek_logo.png') }}" alt="Pluisje logo" style="height: 80px; margin-bottom: 1rem;">
+        <p>Deze website draait op een team van enthousiaste hamstertjes. 🐹❤️</p>
+    </footer>
+</div>
 
     <script>
 		async function genereerTekst() {
@@ -156,13 +165,69 @@
 		}
 
 
-        window.onload = function () {
-            const chatBox = document.getElementById("chat-history");
-            if (chatBox) {
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }
-        };
-    </script>
+		window.onload = function () {
+			const chatBox = document.getElementById("chat-history");
+			if (chatBox) {
+				chatBox.scrollTop = chatBox.scrollHeight;
+			}
+
+			// Automatisch focus op invoerveld
+			const input = document.getElementById("prompt");
+			if (input) input.focus();
+		};
+		
+				// Spraak naar tekst (Web Speech API)
+		let recognition;
+		let isRecognizing = false;
+
+		if ('webkitSpeechRecognition' in window) {
+			recognition = new webkitSpeechRecognition();
+			recognition.lang = 'nl-NL';
+			recognition.interimResults = false;
+			recognition.continuous = false;
+
+			recognition.onstart = () => {
+				isRecognizing = true;
+				document.getElementById("mic-button").textContent = "🎙️ Opnemen...";
+				document.getElementById("listening-hamster").style.display = "block"; // toon PNG
+			};
+
+			recognition.onend = () => {
+				isRecognizing = false;
+				document.getElementById("mic-button").textContent = "🎤";
+				document.getElementById("listening-hamster").style.display = "none"; // verberg PNG
+			};
+
+			recognition.onerror = (event) => {
+				console.error("Spraakherkenning fout:", event.error);
+				document.getElementById("mic-button").textContent = "🎤";
+			};
+
+			recognition.onresult = (event) => {
+				const transcript = event.results[0][0].transcript;
+				document.getElementById("prompt").value = transcript;
+				genereerTekst(); // automatisch versturen
+			};
+
+			const micButton = document.getElementById("mic-button");
+			micButton.addEventListener("mousedown", () => {
+				if (!isRecognizing) recognition.start();
+			});
+			micButton.addEventListener("mouseup", () => {
+				if (isRecognizing) recognition.stop();
+			});
+
+			// Voor mobiele gebruikers: ook touch events
+			micButton.addEventListener("touchstart", (e) => {
+				e.preventDefault(); // voorkomt "ghost click"
+				if (!isRecognizing) recognition.start();
+			});
+			micButton.addEventListener("touchend", () => {
+				if (isRecognizing) recognition.stop();
+			});
+		}
+</script>
+
 
     <hr>
     <footer style="text-align: center; margin-top: 2rem;">
