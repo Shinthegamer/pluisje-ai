@@ -395,8 +395,9 @@ form button:hover,
 	  position: fixed;
 	  top: 50%;
 	  left: 50%;
-	  width: 120px;
-	  height: auto;
+	  width: 120px;        /* Alleen breedte opgeven */
+	  max-width: 80vw;     /* Responsive */
+	  height: auto;        /* Laat hoogte automatisch schalen */
 	  transform: translate(-50%, -50%);
 	  z-index: 9999;
 	  animation: wiggle 0.6s infinite;
