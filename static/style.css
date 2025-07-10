@@ -369,9 +369,9 @@ form button:hover,
 	flex-direction: column;  /* <-- GEEN reverse! */
   }
   
-    .login-container {
+  .login-container {
     max-width: 90vw; /* 90% van de viewport breedte */
-    padding: 1.5rem; /* iets minder padding om ruimte te maken */
+    padding: 1.5rem; /* iets minder padding om ruimte te maken maar werkt niet */
   }
   #chat-history {
     min-height: 200px;
