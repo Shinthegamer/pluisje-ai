@@ -131,38 +131,80 @@ def reset():
 def generate():
     data = request.json
     user_input = data.get("prompt", "").strip()
-    email = session.get("email") or "onbekend"
+    email = session.get("email", "onbekend")
 
     if not user_input:
         return jsonify({"error": "Geen invoer ontvangen"}), 400
 
+    # --------------------------
+    # 1. Sessie + geheugen herstellen
+    # --------------------------
     if "messages" not in session:
-        if session.get("user") == "bieb":
-            role = "Je bent een AI-assistent voor bibliotheekmedewerkers..."
-        else:
-            role = "Je bent Pluisje de hamster-AI..."
-        session["messages"] = [{"role": "system", "content": role}]
+        # Basisprompt voor Pluisje
+        session["messages"] = [{
+            "role": "system",
+            "content": (
+                "Je bent Pluisje, een vriendelijke, slimme assistent. "
+                "Beantwoord vragen in JSON-formaat met:\n\n"
+                "{\n"
+                "  \"long_response\": \"uitgebreide uitleg\",\n"
+                "  \"short_response\": \"korte zin voor spraak\"\n"
+                "}"
+            )
+        }]
 
+        # Herstel recente context uit database (laatste 20)
+        db_msgs = ChatMessage.query.filter_by(user_email=email).order_by(ChatMessage.timestamp).all()
+        for msg in db_msgs[-20:]:
+            session["messages"].append({"role": msg.role, "content": msg.content})
+
+    # Voeg gebruikersprompt toe
     session["messages"].append({"role": "user", "content": user_input})
 
     try:
+        # --------------------------
+        # 2. GPT met JSON-output
+        # --------------------------
         response = client.chat.completions.create(
             model="gpt-4o",
-            messages=session["messages"]
+            messages=session["messages"],
+            response_format="json"
         )
-        assistant_reply = response.choices[0].message.content
-        session["messages"].append({"role": "assistant", "content": assistant_reply})
 
-        # Opslaan in database
-        user_msg = ChatMessage(user_email=email, role="user", content=user_input)
-        assistant_msg = ChatMessage(user_email=email, role="assistant", content=assistant_reply)
-        db.session.add(user_msg)
-        db.session.add(assistant_msg)
+        parsed = json.loads(response.choices[0].message.content)
+        long_response = parsed.get("long_response", "").strip()
+        short_response = parsed.get("short_response", "").strip()
+
+        session["messages"].append({"role": "assistant", "content": long_response})
+
+        # --------------------------
+        # 3. Max. 50 berichten per gebruiker in DB
+        # --------------------------
+        MAX_MESSAGES = 50
+        existing_msgs = ChatMessage.query.filter_by(user_email=email).order_by(ChatMessage.id.asc()).all()
+
+        if len(existing_msgs) >= MAX_MESSAGES:
+            to_delete = existing_msgs[:len(existing_msgs) - MAX_MESSAGES + 2]  # +2 voor nieuwe paar
+            for msg in to_delete:
+                db.session.delete(msg)
+            db.session.commit()
+
+        # Nieuw paar opslaan
+        db.session.add(ChatMessage(user_email=email, role="user", content=user_input))
+        db.session.add(ChatMessage(user_email=email, role="assistant", content=long_response))
         db.session.commit()
 
-        return jsonify({"response": assistant_reply})
+        # --------------------------
+        # 4. Terug naar frontend
+        # --------------------------
+        return jsonify({
+            "long_response": long_response,
+            "short_response": short_response
+        })
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+        
 
 @app.route("/generate-image", methods=["POST"])
 @login_required

@@ -83,18 +83,18 @@
 				const resultEl = document.getElementById("resultaat");
 				const chatHistory = document.getElementById("chat-history");
 
-				if (data.response) {
-					const userMessage = document.createElement("div");
-					userMessage.classList.add("chat", "user");
-					userMessage.textContent = prompt;
-					chatHistory.appendChild(userMessage);
+			if (data.long_response) {
+				const userMessage = document.createElement("div");
+				userMessage.classList.add("chat", "user");
+				userMessage.textContent = prompt;
+				chatHistory.appendChild(userMessage);
 
-					const assistantMessage = document.createElement("div");
-					assistantMessage.classList.add("chat", "assistant");
-					assistantMessage.textContent = data.response;
-					chatHistory.appendChild(assistantMessage);
-					
-					pluisjeSpeak(data.response);
+				const assistantMessage = document.createElement("div");
+				assistantMessage.classList.add("chat", "assistant");
+				assistantMessage.textContent = data.long_response;
+				chatHistory.appendChild(assistantMessage);
+				
+				pluisjeSpeak(data.short_response || data.long_response); // spreek kort of anders lang
 
 					promptInput.value = "";
 					errorEl.textContent = "";
