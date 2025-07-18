@@ -8,6 +8,7 @@ import smtplib
 from email.message import EmailMessage
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
+import json
 from flask_migrate import Migrate
 from itsdangerous import URLSafeTimedSerializer
 from markupsafe import Markup
