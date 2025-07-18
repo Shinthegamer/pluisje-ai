@@ -155,16 +155,21 @@ def generate():
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=messages,
+            response_format="json"
         )
+                       
     except Exception as e:
         return jsonify({"error": f"Fout bij OpenAI-aanroep: {str(e)}"}), 500
 
     try:
-        parsed = response.choices[0].message.content
+        parsed = json.loads(response.choices[0].message.content)
         long_response = parsed.get("long_response", "").strip()
         short_response = parsed.get("short_response", "").strip()
     except Exception as e:
-        return jsonify({"error": f"Kon JSON niet verwerken: {str(e)}"}), 500
+        return jsonify({
+            "error": f"Kon JSON niet verwerken: {str(e)}",
+            "raw_response": response.choices[0].message.content
+        }), 500
 
     session["messages"] = messages + [{"role": "assistant", "content": long_response}]
 
