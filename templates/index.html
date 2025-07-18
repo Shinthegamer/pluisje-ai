@@ -60,16 +60,58 @@
 </div>
 
     <script>
-		let preferredVoice = null;
+  let preferredVoice = null;
 
-window.speechSynthesis.onvoiceschanged = () => {
-  const voices = window.speechSynthesis.getVoices();
-  preferredVoice = voices.find(v =>
-    v.name.toLowerCase().includes("nova") ||
-    v.name.toLowerCase().includes("female") ||
-    v.lang === "nl-NL"
-  );
-};
+  function updateVoices() {
+    const voices = window.speechSynthesis.getVoices();
+    if (!voices || voices.length === 0) {
+      console.warn("Geen stemmen beschikbaar.");
+      return;
+    }
+
+    preferredVoice = voices.find(v =>
+      v.name.toLowerCase().includes("nova")
+    ) || voices.find(v =>
+      v.lang === "nl-NL" && v.localService
+    );
+
+    if (preferredVoice) {
+      console.log("Stem geselecteerd:", preferredVoice.name, preferredVoice.lang);
+    } else {
+      console.warn("Geen geschikte stem gevonden.");
+    }
+  }
+
+  // Op sommige browsers moet je deze expliciet binden
+  window.speechSynthesis.onvoiceschanged = updateVoices;
+  window.addEventListener("load", () => {
+    updateVoices();
+  });
+
+function pluisjeSpeak(longText, shortText = "") {
+  if (!('speechSynthesis' in window)) {
+    console.warn("Text-to-Speech wordt niet ondersteund in deze browser.");
+    return;
+  }
+
+  const text = shortText?.trim() || longText?.trim();
+  if (!text) return;
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'nl-NL';
+  utterance.pitch = 1.3;
+  utterance.rate = 1.05;
+  utterance.volume = 1.0;
+
+  if (preferredVoice) {
+    utterance.voice = preferredVoice;
+  } else {
+    console.warn("Geen geschikte stem gevonden, standaard wordt gebruikt.");
+  }
+
+  speechSynthesis.cancel(); // Stop vorige spraak indien bezig
+  speechSynthesis.speak(utterance);
+}
 		
 		
 		async function genereerTekst() {
@@ -174,27 +216,6 @@ window.speechSynthesis.onvoiceschanged = () => {
 			}
 		}
 
-		function pluisjeSpeak(text) {
-		  if (!('speechSynthesis' in window)) {
-			console.warn("Text-to-Speech wordt niet ondersteund in deze browser.");
-			return;
-		  }
-
-		  const utterance = new SpeechSynthesisUtterance(text);
-		  utterance.lang = 'nl-NL';
-		  utterance.pitch = 1.3;
-		  utterance.rate = 1.05;
-		  utterance.volume = 1.0;
-
-		  if (preferredVoice) {
-			utterance.voice = preferredVoice;
-		  } else {
-			console.warn("Geen geschikte stem gevonden, standaard wordt gebruikt.");
-		  }
-
-		  speechSynthesis.cancel(); // Stop vorige spraak
-		  speechSynthesis.speak(utterance);
-		}
 
 		window.onload = function () {
 			const chatBox = document.getElementById("chat-history");
@@ -205,6 +226,10 @@ window.speechSynthesis.onvoiceschanged = () => {
 			// Automatisch focus op invoerveld
 			const input = document.getElementById("prompt");
 			if (input) input.focus();
+			
+			setTimeout(() => {
+			updateVoices();
+				}, 500);
 		};
 		
 				// Spraak naar tekst (Web Speech API)
@@ -264,6 +289,7 @@ window.speechSynthesis.onvoiceschanged = () => {
     <footer style="text-align: center; margin-top: 2rem;">
         <img src="{{ url_for('static', filename='bibliotheek_logo.png') }}" alt="Pluisje logo" style="height: 80px; margin-bottom: 1rem;">
         <p>Deze website draait op een team van enthousiaste hamstertjes. 🐹❤️</p>
+			<button onclick="pluisjeSpeak('Lang antwoord test', 'Korte test')">Test stem</button>
     </footer>
 </body>
 </html>

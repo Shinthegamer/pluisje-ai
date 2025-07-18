@@ -16,8 +16,8 @@ from markupsafe import Markup
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY")  # Eerst instellen
-serializer = URLSafeTimedSerializer(app.secret_key)  # Dan gebruiken
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
+serializer = URLSafeTimedSerializer(app.secret_key)
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
@@ -28,9 +28,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-
 class ChatMessage(db.Model):
-    __tablename__ = 'chatmessages'  # sluit aan bij bestaande tabel1
+    __tablename__ = 'chatmessages'
     id = db.Column(db.Integer, primary_key=True)
     user_email = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False)
@@ -52,7 +51,6 @@ def login_required(f):
         if request.path.startswith("/static/"):
             return f(*args, **kwargs)
         if not session.get("email"):
-            # Redirect naar login ipv JSON voor normale routes
             if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return jsonify({"error": "Niet ingelogd"}), 401
             else:
@@ -61,12 +59,11 @@ def login_required(f):
         return f(*args, **kwargs)
     return wrapper
 
-# Welkomstmodus bepalen
 @app.before_request
 def check_user():
     email = session.get("email")
     if email:
-        session["user"] = email.split('@')[0]  # toont alleen 'pluis' i.p.v. hele emailadres
+        session["user"] = email.split('@')[0]
     else:
         session["user"] = None
 
@@ -77,7 +74,6 @@ def login():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password")
-
         user = User.query.filter_by(email=email).first()
 
         if not user:
@@ -97,6 +93,7 @@ def login():
 
     return render_template("login.html", show_reset_link=False)
 
+
 @app.route("/")
 @login_required
 def index():
@@ -104,17 +101,14 @@ def index():
     chat_history = []
 
     if email:
-        # Query alle berichten van deze gebruiker, chronologisch
         db_msgs = ChatMessage.query.filter_by(user_email=email).order_by(ChatMessage.timestamp).all()
-
-        # Omzetten naar lijst dicts voor template, of direct doorgeven (kan ook in Jinja)
         chat_history = [{"role": m.role, "content": m.content} for m in db_msgs]
 
     user_mode = session.get("user")
     debug = app.debug
     return render_template("index.html", messages=chat_history, user=user_mode, debug=debug)
-   
-     
+
+        
 @app.route("/logout")
 @login_required
 def logout():
@@ -133,78 +127,65 @@ def generate():
     data = request.json
     user_input = data.get("prompt", "").strip()
     email = session.get("email", "onbekend")
+    user_mode = session.get("user", "gebruiker")
 
     if not user_input:
         return jsonify({"error": "Geen invoer ontvangen"}), 400
 
-    # --------------------------
-    # 1. Sessie + geheugen herstellen
-    # --------------------------
-    if "messages" not in session:
-        # Basisprompt voor Pluisje
-        session["messages"] = [{
-            "role": "system",
-            "content": (
-                "Je bent Pluisje, een vriendelijke, slimme assistent. "
-                "Beantwoord vragen in JSON-formaat met:\n\n"
-                "{\n"
-                "  \"long_response\": \"uitgebreide uitleg\",\n"
-                "  \"short_response\": \"korte zin voor spraak\"\n"
-                "}"
-            )
-        }]
+    messages = [{
+        "role": "system",
+        "content": (
+            f"Je bent Pluisje, de assistent van {user_mode}. "
+            "Beantwoord vragen in JSON-formaat met:\n\n"
+            "{\n"
+            "  \"long_response\": \"uitgebreide uitleg\",\n"
+            "  \"short_response\": \"korte zin voor spraak\"\n"
+            "}"
+        )
+    }]
 
-        # Herstel recente context uit database (laatste 20)
-        db_msgs = ChatMessage.query.filter_by(user_email=email).order_by(ChatMessage.timestamp).all()
-        for msg in db_msgs[-20:]:
-            session["messages"].append({"role": msg.role, "content": msg.content})
+    db_msgs = ChatMessage.query.filter_by(user_email=email).order_by(ChatMessage.timestamp).all()
+    for msg in db_msgs[-20:]:
+        messages.append({"role": msg.role, "content": msg.content})
 
-    # Voeg gebruikersprompt toe
-    session["messages"].append({"role": "user", "content": user_input})
+    messages.append({"role": "user", "content": user_input})
 
     try:
-        # --------------------------
-        # 2. GPT met JSON-output
-        # --------------------------
         response = client.chat.completions.create(
             model="gpt-4o",
-            messages=session["messages"],
+            messages=messages,
+            response_format="json"
         )
+    except Exception as e:
+        return jsonify({"error": f"Fout bij OpenAI-aanroep: {str(e)}"}), 500
 
-        parsed = json.loads(response.choices[0].message.content)
+    try:
+        parsed = response.choices[0].message.content
         long_response = parsed.get("long_response", "").strip()
         short_response = parsed.get("short_response", "").strip()
+    except Exception as e:
+        return jsonify({"error": f"Kon JSON niet verwerken: {str(e)}"}), 500
 
-        session["messages"].append({"role": "assistant", "content": long_response})
+    session["messages"] = messages + [{"role": "assistant", "content": long_response}]
 
-        # --------------------------
-        # 3. Max. 50 berichten per gebruiker in DB
-        # --------------------------
-        MAX_MESSAGES = 12  # bijvoorbeeld
-        existing_msgs = ChatMessage.query.filter_by(user_email=email).order_by(ChatMessage.id.asc()).all()
-
-        if len(existing_msgs) >= MAX_MESSAGES:
-            session["messages"] = session["messages"][-MAX_MESSAGES:]
-            to_delete = existing_msgs[:len(existing_msgs) - MAX_MESSAGES + 2]  # +2 voor nieuwe paar
-            for msg in to_delete:
-                db.session.delete(msg)
-            db.session.commit()
-
-        # Nieuw paar opslaan
-        db.session.add(ChatMessage(user_email=email, role="user", content=user_input))
-        db.session.add(ChatMessage(user_email=email, role="assistant", content=long_response))
+    MAX_MESSAGES = 50
+    existing_msgs = ChatMessage.query.filter_by(user_email=email).order_by(ChatMessage.id.asc()).all()
+    if len(existing_msgs) >= MAX_MESSAGES:
+        to_delete = existing_msgs[:len(existing_msgs) - MAX_MESSAGES + 2]
+        for msg in to_delete:
+            db.session.delete(msg)
         db.session.commit()
 
-        # --------------------------
-        # 4. Terug naar frontend
-        # --------------------------
-        return jsonify({
-            "long_response": long_response,
-            "short_response": short_response
-        })
+    db.session.add(ChatMessage(user_email=email, role="user", content=user_input))
+    db.session.add(ChatMessage(user_email=email, role="assistant", content=long_response))
+    db.session.commit()
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return jsonify({
+        "long_response": long_response,
+        "short_response": short_response
+    })
+
+
         
 
 @app.route("/generate-image", methods=["POST"])
