@@ -93,6 +93,8 @@
 					assistantMessage.classList.add("chat", "assistant");
 					assistantMessage.textContent = data.response;
 					chatHistory.appendChild(assistantMessage);
+					
+					pluisjeSpeak(data.response);
 
 					promptInput.value = "";
 					errorEl.textContent = "";
@@ -160,6 +162,33 @@
 			}
 		}
 
+		function pluisjeSpeak(text) {
+		  if (!('speechSynthesis' in window)) {
+			console.warn("Text-to-Speech wordt niet ondersteund in deze browser.");
+			return;
+		  }
+
+		  const utterance = new SpeechSynthesisUtterance(text);
+		  utterance.lang = 'nl-NL';
+		  utterance.pitch = 1.3;
+		  utterance.rate = 1.05;
+		  utterance.volume = 1.0;
+
+		  const voices = window.speechSynthesis.getVoices();
+		  const preferredVoice = voices.find(v =>
+			v.name.toLowerCase().includes("nova") ||
+			v.name.toLowerCase().includes("female") ||
+			v.lang === "nl-NL"
+		  );
+
+		  if (preferredVoice) utterance.voice = preferredVoice;
+
+		  speechSynthesis.cancel(); // Stop vorige spraak als nodig
+		  speechSynthesis.speak(utterance);
+		}
+
+		// Zorg dat voices op tijd geladen zijn
+		window.speechSynthesis.onvoiceschanged = () => {};
 
 		window.onload = function () {
 			const chatBox = document.getElementById("chat-history");
