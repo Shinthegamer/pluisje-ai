@@ -168,7 +168,6 @@ def generate():
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=session["messages"],
-            response_format="json"
         )
 
         parsed = json.loads(response.choices[0].message.content)
@@ -180,10 +179,11 @@ def generate():
         # --------------------------
         # 3. Max. 50 berichten per gebruiker in DB
         # --------------------------
-        MAX_MESSAGES = 50
+        MAX_MESSAGES = 12  # bijvoorbeeld
         existing_msgs = ChatMessage.query.filter_by(user_email=email).order_by(ChatMessage.id.asc()).all()
 
         if len(existing_msgs) >= MAX_MESSAGES:
+            session["messages"] = session["messages"][-MAX_MESSAGES:]
             to_delete = existing_msgs[:len(existing_msgs) - MAX_MESSAGES + 2]  # +2 voor nieuwe paar
             for msg in to_delete:
                 db.session.delete(msg)
