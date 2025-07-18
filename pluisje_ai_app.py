@@ -29,7 +29,7 @@ migrate = Migrate(app, db)
 
 
 class ChatMessage(db.Model):
-    __tablename__ = 'chatmessages'  # sluit aan bij bestaande tabel
+    __tablename__ = 'chatmessages'  # sluit aan bij bestaande tabel1
     id = db.Column(db.Integer, primary_key=True)
     user_email = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False)
