@@ -133,14 +133,15 @@ def generate():
         return jsonify({"error": "Geen invoer ontvangen"}), 400
 
     messages = [{
-        "role": "system",
-        "content": (
-            f"Je bent Pluisje, de assistent van {user_mode}. "
-            "Beantwoord vragen in JSON-formaat met:\n\n"
-            "{\n"
-            "  \"long_response\": \"uitgebreide uitleg\",\n"
-            "  \"short_response\": \"korte zin voor spraak\"\n"
-            "}"
+      "role": "system",
+      "content": (
+        "Je bent Pluisje, een slimme en vriendelijke AI-assistent. "
+        "Beantwoord alle vragen uitsluitend in onderstaand JSON-formaat:\n"
+        "{\n"
+        "  \"long_response\": \"uitgebreide uitleg\",\n"
+        "  \"short_response\": \"korte samenvatting voor spraak\"\n"
+        "}\n"
+        "Gebruik geen Markdown of extra uitleg buiten dit JSON-object."
         )
     }]
 
@@ -154,7 +155,6 @@ def generate():
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=messages,
-            response_format="json"
         )
     except Exception as e:
         return jsonify({"error": f"Fout bij OpenAI-aanroep: {str(e)}"}), 500
