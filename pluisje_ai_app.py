@@ -155,7 +155,7 @@ def generate():
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=messages,
-            response_format="json"
+            response_format="json_object"
         )
                        
     except Exception as e:
