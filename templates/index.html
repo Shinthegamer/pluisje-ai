@@ -60,6 +60,18 @@
 </div>
 
     <script>
+		let preferredVoice = null;
+
+window.speechSynthesis.onvoiceschanged = () => {
+  const voices = window.speechSynthesis.getVoices();
+  preferredVoice = voices.find(v =>
+    v.name.toLowerCase().includes("nova") ||
+    v.name.toLowerCase().includes("female") ||
+    v.lang === "nl-NL"
+  );
+};
+		
+		
 		async function genereerTekst() {
 			const promptInput = document.getElementById("prompt");
 			const submitButton = document.querySelector("#prompt-form button[type='submit']");
@@ -174,21 +186,15 @@
 		  utterance.rate = 1.05;
 		  utterance.volume = 1.0;
 
-		  const voices = window.speechSynthesis.getVoices();
-		  const preferredVoice = voices.find(v =>
-			v.name.toLowerCase().includes("nova") ||
-			v.name.toLowerCase().includes("female") ||
-			v.lang === "nl-NL"
-		  );
+		  if (preferredVoice) {
+			utterance.voice = preferredVoice;
+		  } else {
+			console.warn("Geen geschikte stem gevonden, standaard wordt gebruikt.");
+		  }
 
-		  if (preferredVoice) utterance.voice = preferredVoice;
-
-		  speechSynthesis.cancel(); // Stop vorige spraak als nodig
+		  speechSynthesis.cancel(); // Stop vorige spraak
 		  speechSynthesis.speak(utterance);
 		}
-
-		// Zorg dat voices op tijd geladen zijn
-		window.speechSynthesis.onvoiceschanged = () => {};
 
 		window.onload = function () {
 			const chatBox = document.getElementById("chat-history");
