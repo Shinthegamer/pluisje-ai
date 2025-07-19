@@ -162,8 +162,6 @@ def generate():
     except Exception as e:
         return jsonify({"error": f"Fout bij OpenAI-aanroep: {str(e)}"}), 500
 
-    # Voeg het antwoord toe aan de sessie en sla op
-    session["messages"] = messages + [{"role": "assistant", "content": ai_response}]
 
     db.session.add(ChatMessage(user_email=email, role="user", content=user_input))
     db.session.add(ChatMessage(user_email=email, role="assistant", content=ai_response))
