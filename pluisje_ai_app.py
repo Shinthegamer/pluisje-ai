@@ -131,38 +131,46 @@ def reset():
 def generate():
     data = request.json
     user_input = data.get("prompt", "").strip()
-    email = session.get("email") or "onbekend"
+    email = session.get("email", "onbekend")
 
     if not user_input:
         return jsonify({"error": "Geen invoer ontvangen"}), 400
 
-    if "messages" not in session:
-        if session.get("user") == "bieb":
-            role = "Je bent een AI-assistent voor bibliotheekmedewerkers..."
-        else:
-            role = "Je bent Pluisje de hamster-AI..."
-        session["messages"] = [{"role": "system", "content": role}]
+    # 1. Systeem prompt
+    messages = [{
+        "role": "system",
+        "content": (
+            "Je bent Pluisje, een slimme en vriendelijke AI-assistent. Reageer behulpzaam en menselijk."
+        )
+    }]
 
-    session["messages"].append({"role": "user", "content": user_input})
+    # 2. Laad max. 20 eerdere berichten uit DB
+    db_msgs = ChatMessage.query.filter_by(user_email=email).order_by(ChatMessage.timestamp.asc()).limit(20).all()
+
+    for msg in db_msgs:
+        messages.append({"role": msg.role, "content": msg.content})
+
+    # 3. Voeg huidige gebruikersprompt toe
+    messages.append({"role": "user", "content": user_input})
 
     try:
         response = client.chat.completions.create(
             model="gpt-4o",
-            messages=session["messages"]
+            messages=messages
         )
-        assistant_reply = response.choices[0].message.content
-        session["messages"].append({"role": "assistant", "content": assistant_reply})
-
-        # Opslaan in database
-        user_msg = ChatMessage(user_email=email, role="user", content=user_input)
-        assistant_msg = ChatMessage(user_email=email, role="assistant", content=assistant_reply)
-        db.session.add(user_msg)
-        db.session.add(assistant_msg)
-        db.session.commit()
-
-        return jsonify({"response": assistant_reply})
+        ai_response = response.choices[0].message.content.strip()
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Fout bij OpenAI-aanroep: {str(e)}"}), 500
+
+    # Voeg het antwoord toe aan de sessie en sla op
+    session["messages"] = messages + [{"role": "assistant", "content": ai_response}]
+
+    db.session.add(ChatMessage(user_email=email, role="user", content=user_input))
+    db.session.add(ChatMessage(user_email=email, role="assistant", content=ai_response))
+    db.session.commit()
+
+    return jsonify({"result": ai_response})
+
 
 @app.route("/generate-image", methods=["POST"])
 @login_required
