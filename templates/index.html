@@ -83,7 +83,7 @@
 				const resultEl = document.getElementById("resultaat");
 				const chatHistory = document.getElementById("chat-history");
 
-				if (data.response) {
+				if (data.result) {
 					const userMessage = document.createElement("div");
 					userMessage.classList.add("chat", "user");
 					userMessage.textContent = prompt;
@@ -91,7 +91,7 @@
 
 					const assistantMessage = document.createElement("div");
 					assistantMessage.classList.add("chat", "assistant");
-					assistantMessage.textContent = data.response;
+					assistantMessage.textContent = data.result;
 					chatHistory.appendChild(assistantMessage);
 
 					promptInput.value = "";
